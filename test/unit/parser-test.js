@@ -7,7 +7,7 @@ describe('Default Parser', () => {
 
   let tests = [{
     name: 'evals arithmetic',
-    expresssion: 'a + b - c/(1 + 3 - 2) - 1',
+    expression: 'a + b - c/(1 + 3 - 2) - 1',
     cases: [{
       locals: { a: 3, b: 7, c: 4 },
       result: 7
@@ -17,7 +17,7 @@ describe('Default Parser', () => {
     }],
   }, {
     name: 'evals filter evaluation',
-    expresssion: 'name|replace : "Mr" : "Mrs"',
+    expression: 'name|replace : "Mr" : "Mrs"',
     cases: [{
       locals: { name: 'Mr. Albo' },
       filters: {
@@ -27,7 +27,7 @@ describe('Default Parser', () => {
     }]
   }, {
     name: 'evals nesterd filter evaluation',
-    expresssion: 'name|replace:("M"|append:"r"):"Mrs"',
+    expression: 'name|replace:("M"|append:"r"):"Mrs"',
     cases: [{
       locals: { name: 'Mr. Albo' },
       filters: {
@@ -38,7 +38,7 @@ describe('Default Parser', () => {
     }]
   }, {
     name: 'multiple filters',
-    expresssion: '""|append:1|append:2|append:3|append:4',
+    expression: '""|append:1|append:2|append:3|append:4',
     cases: [{
       filters: {
         append: (a, b) => a + b,
@@ -47,7 +47,7 @@ describe('Default Parser', () => {
     }]
   }, {
     name: 'evals object members',
-    expresssion: 'foo.bar + foo["baz"]',
+    expression: 'foo.bar + foo["baz"]',
     cases: [{
       locals: { foo: { bar: 1, baz: 3 } },
       result: 4
@@ -57,26 +57,26 @@ describe('Default Parser', () => {
     }]
   }, {
     name: 'evals array members',
-    expresssion: 'foo[foo[foo[foo[0]]]]',
+    expression: 'foo[foo[foo[foo[0]]]]',
     cases: [{
       locals: { foo: [1, 2, 3, 4] },
       result: 4
     }]
   }, {
     name: 'evals array literals',
-    expresssion: '[0, 1, 2, 3][1]',
+    expression: '[0, 1, 2, 3][1]',
     cases: [{
       result: 1
     }]
   }, {
     name: 'evals object literals',
-    expresssion: '{a: "foo", "b": "bar"}["a"]',
+    expression: '{a: "foo", "b": "bar"}["a"]',
     cases: [{
       result: 'foo'
     }]
   }, {
     name: 'accepts trailing semicolon',
-    expresssion: '1 + 1;',
+    expression: '1 + 1;',
     cases: [{
       result: 2
     }]
@@ -84,7 +84,7 @@ describe('Default Parser', () => {
 
   tests.forEach(test => {
     it(test.name, () => {
-      let $eval = parser.parse(test.expresssion);
+      let $eval = parser.parse(test.expression);
       test.cases.forEach(c => {
         expect($eval(c.locals, c.filters)).equals(c.result);
       });
