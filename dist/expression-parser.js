@@ -89,7 +89,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       var dest = new RegExp(source.source, source.toString().match(/[^\/]*$/)[0]);
       dest.lastIndex = source.lastIndex;
       return dest;
-    } else if (helpers__isNumber(source) || isString(source) || isBoolean(source)) {
+    } else if (helpers__isNumber(source) || isString(source) || isBoolean(source) || isFunction(source)) {
       return source;
     } else {
       var dest = {};
@@ -622,14 +622,18 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
   exports.AST = AST;
 
-  var parser__DEFAULT_OPTIONS = {};
+  var parser__DEFAULT_OPTIONS = {
+    LexerClass: Lexer,
+    ASTBuilderClass: AST
+  };
 
   var Parser = (function () {
-    function Parser(astBuilder, options) {
+    function Parser(options) {
       _classCallCheck(this, Parser);
 
-      this.astBuilder = astBuilder;
       this.options = defaults(options, parser__DEFAULT_OPTIONS);
+      var lexer = new this.options.LexerClass();
+      this.astBuilder = new this.options.ASTBuilderClass(lexer);
     }
 
     _createClass(Parser, [{
