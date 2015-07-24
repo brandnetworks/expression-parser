@@ -1,8 +1,6 @@
 import {copy, defaults} from './helpers';
 
-export const DEFAULT_OPTIONS = {
-  multipleExpressions: true
-};
+export const DEFAULT_OPTIONS = {};
 
 export default class AST {
 
@@ -21,29 +19,11 @@ export default class AST {
     this.text = text;
     this.tokens = this.lexer.lex(text);
 
-    let value = this.options.multipleExpressions ? this.program() : this.expressionStatement();
-
+    let value = this.filterChain();
     if (this.tokens.length !== 0) {
       this.throwError('is an unexpected token', this.tokens[0]);
     }
-
     return value;
-  }
-
-  program() {
-    let body = [];
-    while (true) {
-      if (this.tokens.length > 0 && !this.peek('}', ')', ';', ']')) {
-        body.push(this.expressionStatement());
-      }
-      if (!this.expect(';')) {
-        return { type: AST.Program, body: body };
-      }
-    }
-  }
-
-  expressionStatement() {
-    return { type: AST.ExpressionStatement, expression: this.filterChain() };
   }
 
   filterChain() {
@@ -282,8 +262,6 @@ export default class AST {
   }
 }
 
-AST.Program = 'Program';
-AST.ExpressionStatement = 'ExpressionStatement';
 AST.ConditionalExpression = 'ConditionalExpression';
 AST.LogicalExpression = 'LogicalExpression';
 AST.BinaryExpression = 'BinaryExpression';
@@ -297,8 +275,6 @@ AST.Property = 'Property';
 AST.ObjectExpression = 'ObjectExpression';
 
 AST.PRIORITY = {
-  [AST.Program]: 0,
-  [AST.ExpressionStatement]: 0,
   [AST.ConditionalExpression]: 1,
   [AST.LogicalExpression]: 1,
   [AST.BinaryExpression]: 2,

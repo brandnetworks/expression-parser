@@ -15,10 +15,6 @@ export default class Parser {
       return `(${this.toString(ast)})`;
     }
     switch (ast.type) {
-      case AST.Program:
-        return ast.body.map(str).join(';\n');
-      case AST.ExpressionStatement:
-        return this.toString(ast.expression);
       case AST.ConditionalExpression:
         return `${str(ast.test)} ? ${str(ast.consequent)} : ${str(ast.alternate)}`;
       case AST.LogicalExpression:
@@ -57,14 +53,6 @@ export default class Parser {
     let e = expr => this.eval(expr, locals, filters);
     try {
       switch (ast.type) {
-        case AST.Program:
-          let result;
-          for (let expr of ast.body) {
-            result = e(expr);
-          }
-          return result;
-        case AST.ExpressionStatement:
-          return e(ast.expression);
         case AST.ConditionalExpression:
           return e(ast.test) ? e(ast.consequent) : e(ast.alternate);
         case AST.LogicalExpression:
