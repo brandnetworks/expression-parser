@@ -65,6 +65,12 @@ describe('Default Parser', () => {
     cases: [{
       result: 'foo'
     }]
+  }, {
+    name: 'accepts trailing semicolon',
+    expresssion: '1 + 1;',
+    cases: [{
+      result: 2
+    }]
   }];
 
   tests.forEach(test => {

@@ -20,6 +20,10 @@ export default class AST {
     this.tokens = this.lexer.lex(text);
 
     let value = this.filterChain();
+    if (this.peek(';')) {
+      // Allow trailing semicolon, not required
+      this.expect(';');
+    }
     if (this.tokens.length !== 0) {
       this.throwError('is an unexpected token', this.tokens[0]);
     }
