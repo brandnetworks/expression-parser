@@ -53,6 +53,18 @@ describe('Default Parser', () => {
       locals: { foo: [1, 2, 3, 4] },
       result: 4
     }]
+  }, {
+    name: 'evals array literals',
+    expresssion: '[0, 1, 2, 3][1]',
+    cases: [{
+      result: 1
+    }]
+  }, {
+    name: 'evals object literals',
+    expresssion: '{a: "foo", "b": "bar"}["a"]',
+    cases: [{
+      result: 'foo'
+    }]
   }];
 
   tests.forEach(test => {

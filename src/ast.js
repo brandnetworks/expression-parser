@@ -295,3 +295,19 @@ AST.Literal = 'Literal';
 AST.ArrayExpression = 'ArrayExpression';
 AST.Property = 'Property';
 AST.ObjectExpression = 'ObjectExpression';
+
+AST.PRIORITY = {
+  [AST.Program]: 0,
+  [AST.ExpressionStatement]: 0,
+  [AST.ConditionalExpression]: 1,
+  [AST.LogicalExpression]: 1,
+  [AST.BinaryExpression]: 2,
+  [AST.UnaryExpression]: 3,
+  [AST.CallExpression]: 4,
+  [AST.MemberExpression]: 5,
+  [AST.Identifier]: 6,
+  [AST.Literal]: 6,
+  [AST.ArrayExpression]: 6,
+  [AST.ObjectExpression]: 6,
+  [AST.Property]: 6,
+};
