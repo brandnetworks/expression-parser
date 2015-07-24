@@ -1,0 +1,27 @@
+{
+  "name": "expression-parser",
+  "version": "1.0.0",
+  "description": "Expression parser and evaluator for Node.js and the browser",
+  "homepage": "https://github.com/brandnetworks/expression-parser",
+  "authors": [
+    "Santi Albo <sa@bn.co>"
+  ],
+  "license": "MIT",
+  "main": "dist/expression-parser.js",
+  "moduleType": [
+    "amd",
+    "es6",
+    "globals",
+    "node"
+  ],
+  "keywords": [
+    "javascript",
+    "expression",
+    "parser",
+    "angular",
+    "filter",
+    "ejs",
+    "jinja"
+  ],
+  "license": "MIT"
+}

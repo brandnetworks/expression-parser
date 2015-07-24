@@ -1,7 +1,7 @@
 {
   "name": "expression-parser",
   "version": "1.0.0",
-  "description": "Expression parser",
+  "description": "Expression parser and evaluator for Node.js and the browser",
   "main": "dist/expression-parser.js",
   "scripts": {
     "test": "gulp",
@@ -17,14 +17,17 @@
     "javascript",
     "expression",
     "parser",
-    "angular"
+    "angular",
+    "filter",
+    "ejs",
+    "jinja"
   ],
   "author": "Santi Albo <sa@bn.co>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/babel/babel-library-boilerplate/issues"
+    "url": "https://github.com/brandnetworks/expression-parser/issues"
   },
-  "homepage": "https://github.com/babel/babel-library-boilerplate",
+  "homepage": "https://github.com/brandnetworks/expression-parser",
   "devDependencies": {
     "babel": "^5.0.0",
     "babel-core": "^5.2.17",
