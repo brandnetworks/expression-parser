@@ -1,9 +1,8 @@
 import util from 'util';
-import {Lexer, AST, Parser} from '../../src';
+import {Parser} from '../../src';
 
 describe('Default Parser', () => {
-  let ast = new AST(new Lexer());
-  let parser = new Parser(ast);
+  let parser = new Parser();
 
   let tests = [{
     name: 'evals arithmetic',

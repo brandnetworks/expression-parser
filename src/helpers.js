@@ -47,7 +47,7 @@ export function copy(source) {
     let dest = new RegExp(source.source, source.toString().match(/[^\/]*$/)[0]);
     dest.lastIndex = source.lastIndex;
     return dest;
-  } else if (isNumber(source) || isString(source) || isBoolean(source)) {
+  } else if (isNumber(source) || isString(source) || isBoolean(source) || isFunction(source)) {
     return source;
   } else {
     let dest = {};

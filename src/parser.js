@@ -1,12 +1,17 @@
 import {defaults} from './helpers';
 import AST from './ast';
+import Lexer from './lexer';
 
-export const DEFAULT_OPTIONS = {};
+export const DEFAULT_OPTIONS = {
+  LexerClass: Lexer,
+  ASTBuilderClass: AST
+};
 
 export default class Parser {
-  constructor(astBuilder, options) {
-    this.astBuilder = astBuilder;
+  constructor(options) {
     this.options = defaults(options, DEFAULT_OPTIONS);
+    let lexer = new this.options.LexerClass();
+    this.astBuilder = new this.options.ASTBuilderClass(lexer);
   }
 
   precedence(expr1, expr2) {

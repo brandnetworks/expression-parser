@@ -22,23 +22,21 @@ Examples
 --------
 ```js
 // On Node.js
-import {Lexer, AST, Parser} from 'expression-parser';
-let ast = new AST(new Lexer());
-let parser = new Parser(ast);
-let $eval = parser.parse('name|replace:"Mr":"Mrs"');
+var Parser = require('expression-parser');
+var parser = new Parser();
+var $eval = parser.parse('name|replace:"Mr":"Mrs"');
 $eval({name: 'Mr. Asimov'}, {
-  replace: (text, substr, repl) => text.replace(substr, repl)
+  replace: function(text, substr, repl) { return text.replace(substr, repl); }
 });
 // > 'Mrs. Asimov'
-let $eval = parser.parse('1 + 2 + 8/4');
+var $eval = parser.parse('1 + 2 + 8/4');
 $eval()
 // > 5
 ```
 
 ```js
 // On the browser
-var ast = new ExpressionParser.AST(new ExpressionParser.Lexer());
-var parser = new ExpressionParser.Parser(ast);
+var parser = new ExpressionParser.Parser();
 var $eval = parser.parse('name|replace:"Mr":"Mrs"');
 $eval({name: 'Mr. Asimov'}, {
   replace: function(text, substr, repl) { return text.replace(substr, repl); }
