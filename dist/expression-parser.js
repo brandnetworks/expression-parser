@@ -1,13 +1,15 @@
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('defaults')) : typeof define === 'function' && define.amd ? define(['exports', 'defaults'], factory) : factory(global.MyLibrary = {}, global.defaults);
-})(this, function (exports, defaults) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) : typeof define === 'function' && define.amd ? define(['exports'], factory) : factory(global.ExpressionParser = {});
+})(this, function (exports) {
   'use strict';
 
-  defaults = 'default' in defaults ? defaults['default'] : defaults;
+  var _AST$PRECEDENCE;
 
   var OPERATORS = {
     '+': true,
@@ -15,8 +17,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     '*': true,
     '/': true,
     '%': true,
-    '===': true,
-    '!==': true,
     '==': true,
     '!=': true,
     '<': true,
@@ -58,6 +58,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     return typeof value === 'string';
   }
 
+  function isBoolean(value) {
+    return typeof value === 'boolean';
+  }
+
   function helpers__isNumber(value) {
     return typeof value === 'number';
   }
@@ -85,6 +89,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       var dest = new RegExp(source.source, source.toString().match(/[^\/]*$/)[0]);
       dest.lastIndex = source.lastIndex;
       return dest;
+    } else if (helpers__isNumber(source) || isString(source) || isBoolean(source)) {
+      return source;
     } else {
       var dest = {};
       for (var key in source) {
@@ -94,6 +100,18 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       }
       return dest;
     }
+  }
+
+  function defaults() {
+    var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+    var defaults_ = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+    Object.keys(defaults_).forEach(function (key) {
+      if (typeof options[key] === 'undefined') {
+        options[key] = copy(defaults_[key]);
+      }
+    });
+    return options;
   }
 
   var Lexer = (function () {
@@ -275,17 +293,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
   exports.Lexer = Lexer;
 
-  var DEFAULT_OPTIONS = {
-    allowAssignments: true,
-    multipleExpressions: true
-  };
+  var _ast__DEFAULT_OPTIONS = {};
 
   var AST = (function () {
     function AST(lexer, options) {
       _classCallCheck(this, AST);
 
       this.lexer = lexer;
-      this.options = defaults(options, DEFAULT_OPTIONS);
+      this.options = defaults(options, _ast__DEFAULT_OPTIONS);
       this.constants = {
         'true': { type: AST.Literal, value: true },
         'false': { type: AST.Literal, value: false },
@@ -300,31 +315,15 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         this.text = text;
         this.tokens = this.lexer.lex(text);
 
-        var value = this.options.multipleExpressions ? this.program() : this.expressionStatement();
-
+        var value = this.filterChain();
+        if (this.peek(';')) {
+          // Allow trailing semicolon, not required
+          this.expect(';');
+        }
         if (this.tokens.length !== 0) {
           this.throwError('is an unexpected token', this.tokens[0]);
         }
-
         return value;
-      }
-    }, {
-      key: 'program',
-      value: function program() {
-        var body = [];
-        while (true) {
-          if (this.tokens.length > 0 && !this.peek('}', ')', ';', ']')) {
-            body.push(this.expressionStatement());
-          }
-          if (!this.expect(';')) {
-            return { type: AST.Program, body: body };
-          }
-        }
-      }
-    }, {
-      key: 'expressionStatement',
-      value: function expressionStatement() {
-        return { type: AST.ExpressionStatement, expression: this.filterChain() };
       }
     }, {
       key: 'filterChain',
@@ -339,16 +338,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     }, {
       key: 'expression',
       value: function expression() {
-        return this.assignment();
-      }
-    }, {
-      key: 'assignment',
-      value: function assignment() {
-        var result = this.ternary();
-        if (this.options.allowAssignments && this.expect('=')) {
-          result = { type: AST.AssignmentExpression, left: result, right: this.assignment(), operator: '=' };
-        }
-        return result;
+        return this.ternary();
       }
     }, {
       key: 'ternary',
@@ -388,7 +378,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       value: function equality() {
         var left = this.relational();
         var token = undefined;
-        while (token = this.expect('==', '!=', '===', '!==')) {
+        while (token = this.expect('==', '!=')) {
           left = { type: AST.BinaryExpression, operator: token.text, left: left, right: this.relational() };
         }
         return left;
@@ -456,10 +446,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
         var next = undefined;
         while (next = this.expect('(', '[', '.')) {
-          if (next.text === '(') {
-            primary = { type: AST.CallExpression, callee: primary, arguments: this.parseArguments() };
-            this.consume(')');
-          } else if (next.text === '[') {
+          if (next.text === '[') {
             primary = { type: AST.MemberExpression, object: primary, property: this.expression(), computed: true };
             this.consume(']');
           } else if (next.text === '.') {
@@ -483,17 +470,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         return result;
       }
     }, {
-      key: 'parseArguments',
-      value: function parseArguments() {
-        var args = [];
-        if (this.peekToken().text !== ')') {
-          do {
-            args.push(this.expression());
-          } while (this.expect(','));
-        }
-        return args;
-      }
-    }, {
       key: 'identifier',
       value: function identifier() {
         var token = this.consume();
@@ -515,7 +491,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         if (this.peekToken().text !== ']') {
           do {
             if (this.peek(']')) {
-              // Support trailing commas per ES5.1.
+              // Support trailing commas
               break;
             }
             elements.push(this.expression());
@@ -533,7 +509,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         if (this.peekToken().text !== '}') {
           do {
             if (this.peek('}')) {
-              // Support trailing commas per ES5.1.
+              // Support trailing commas
               break;
             }
             property = { type: AST.Property, kind: 'init' };
@@ -611,9 +587,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     return AST;
   })();
 
-  AST.Program = 'Program';
-  AST.ExpressionStatement = 'ExpressionStatement';
-  AST.AssignmentExpression = 'AssignmentExpression';
   AST.ConditionalExpression = 'ConditionalExpression';
   AST.LogicalExpression = 'LogicalExpression';
   AST.BinaryExpression = 'BinaryExpression';
@@ -626,169 +599,235 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   AST.Property = 'Property';
   AST.ObjectExpression = 'ObjectExpression';
 
+  AST.PRECEDENCE = (_AST$PRECEDENCE = {}, _defineProperty(_AST$PRECEDENCE, AST.ConditionalExpression, 1), _defineProperty(_AST$PRECEDENCE, AST.LogicalExpression, 1), _defineProperty(_AST$PRECEDENCE, AST.BinaryExpression, 2), _defineProperty(_AST$PRECEDENCE, AST.UnaryExpression, 3), _defineProperty(_AST$PRECEDENCE, AST.CallExpression, 4), _defineProperty(_AST$PRECEDENCE, AST.MemberExpression, 5), _defineProperty(_AST$PRECEDENCE, AST.Identifier, 6), _defineProperty(_AST$PRECEDENCE, AST.Literal, 6), _defineProperty(_AST$PRECEDENCE, AST.ObjectExpression, 6), _defineProperty(_AST$PRECEDENCE, AST.Property, 6), _defineProperty(_AST$PRECEDENCE, AST.ArrayExpression, 6), _AST$PRECEDENCE);
+
+  AST.LOGICAL_EXPRESSION_PRECEDENCE = {
+    '||': 1,
+    '&&': 2
+  };
+
+  AST.BINARY_EXPRESSION_PRECEDENCE = {
+    '==': 1,
+    '!=': 1,
+    '<': 2,
+    '<=': 2,
+    '>': 2,
+    '>=': 2,
+    '+': 3,
+    '-': 3,
+    '*': 4,
+    '/': 4,
+    '%': 4
+  };
+
   exports.AST = AST;
 
-  function isAssignable(_x) {
-    var _again = true;
-
-    _function: while (_again) {
-      var ast = _x;
-      _again = false;
-
-      if (ast.type === AST.Identifier) {
-        return true;
-      } else if (ast.type === AST.MemberExpression) {
-        _x = ast.object;
-        _again = true;
-        continue _function;
-      } else {
-        return false;
-      }
-    }
-  }
+  var parser__DEFAULT_OPTIONS = {};
 
   var Parser = (function () {
     function Parser(astBuilder, options) {
       _classCallCheck(this, Parser);
 
       this.astBuilder = astBuilder;
+      this.options = defaults(options, parser__DEFAULT_OPTIONS);
     }
 
     _createClass(Parser, [{
-      key: 'eval',
-      value: function _eval(ast, locals) {
+      key: 'precedence',
+      value: function precedence(expr1, expr2) {
+        var prec = AST.PRECEDENCE;
+        if (prec[expr1.type] < prec[expr2.type]) {
+          return -1;
+        } else if (prec[expr1.type] > prec[expr2.type]) {
+          return +1;
+        } else if (expr1.type === AST.LogicalExpression || expr1.type === AST.BinaryExpression) {
+          var oprec = expr1.type === AST.LogicalExpression ? AST.LOGICAL_EXPRESSION_PRECEDENCE : AST.BINARY_EXPRESSION_PRECEDENCE;
+          if (oprec[expr1.operator] < oprec[expr2.operator]) {
+            return -1;
+          } else if (oprec[expr1.operator] > oprec[expr2.operator]) {
+            return +1;
+          }
+        }
+        return 0;
+      }
+    }, {
+      key: 'toString',
+      value: function toString(ast, parent) {
         var _this = this;
 
-        var e = function e(expr) {
-          return _this.eval(expr, locals);
+        var str = function str(expr) {
+          return _this.toString(expr, ast);
         };
-        switch (ast.type) {
-          case AST.Program:
-            var result = undefined;
-            var _iteratorNormalCompletion = true;
-            var _didIteratorError = false;
-            var _iteratorError = undefined;
-
-            try {
-              for (var _iterator = ast.body[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                var expr = _step.value;
-
-                result = e(expr);
-              }
-            } catch (err) {
-              _didIteratorError = true;
-              _iteratorError = err;
-            } finally {
-              try {
-                if (!_iteratorNormalCompletion && _iterator['return']) {
-                  _iterator['return']();
-                }
-              } finally {
-                if (_didIteratorError) {
-                  throw _iteratorError;
-                }
-              }
-            }
-
-            return result;
-          case AST.ExpressionStatement:
-            return e(ast.expression);
-          case AST.ConditionalExpression:
-            return e(ast.test) ? e(ast.consequent) : e(ast.alternate);
-          case AST.LogicalExpression:
-            switch (ast.operator) {
-              case '&&':
-                return e(ast.left) && e(ast.right);
-              case '||':
-                return e(ast.left) || e(ast.right);
-              default:
-                throw Error();
-            }
-            break;
-          case AST.BinaryExpression:
-            var left = e(ast.left);
-            var right = e(ast.right);
-            switch (ast.operator) {
-              case '==':
-              case '===':
-                return left === right;
-              case '!=':
-              case '!==':
-                return left !== right;
-              case '<':
-                return left < right;
-              case '<=':
-                return left <= right;
-              case '>':
-                return left > right;
-              case '>=':
-                return left >= right;
-              case '+':
-                return left + right;
-              case '-':
-                return left - right;
-              case '*':
-                return left * right;
-              case '/':
-                return left / right;
-              case '%':
-                return left % right;
-              default:
-                throw Error();
-            }
-            break;
-          case AST.UnaryExpression:
-            switch (ast.operator) {
-              case '+':
-                return +e(ast.argument);
-              case '-':
-                return -e(ast.argument);
-              case '!':
-                return !e(ast.argument);
-              default:
-                throw Error();
-            }
-            break;
-          case AST.CallExpression:
-            var callee = e(ast.callee);
-            var args = ast.arguments.map(e);
-            return callee.apply(null, args);
-          case AST.MemberExpression:
-            if (ast.property.type === AST.Identifier && !ast.computed) {
-              return e(ast.object)[ast.property.name];
-            }
-            return e(ast.object)[e(ast.property)];
-          case AST.Identifier:
-            if (!(ast.name in locals)) {
-              throw Error('Reference error: ' + ast.name + ' is not defined');
-            }
-            return locals[ast.name];
-          case AST.Literal:
-            return ast.value;
-          case AST.ArrayExpression:
-            return ast.elements.map(e);
-          case AST.ObjectExpression:
-            var res = {};
-            ast.properties.forEach(function (prop) {
-              res[e(prop.key)] = e(prop.value);
-            });
-            return res;
-          case AST.AssignmentExpression:
-            if (!isAssignable(ast.left)) {
-              throw Error('Trying to assign a value to a non l-value');
-            }
-            locals[e(ast.left)] = e(ast.right);
-            return undefined;
+        if (parent && this.precedence(ast, parent) < 0) {
+          return '(' + this.toString(ast) + ')';
         }
+        switch (ast.type) {
+          case AST.ConditionalExpression:
+            return str(ast.test) + ' ? ' + str(ast.consequent) + ' : ' + str(ast.alternate);
+          case AST.LogicalExpression:
+            return str(ast.left) + ' ' + ast.operator + ' ' + str(ast.right);
+          case AST.BinaryExpression:
+            return str(ast.left) + ' ' + ast.operator + ' ' + str(ast.right);
+          case AST.UnaryExpression:
+            return '' + ast.operator + str(ast.argument);
+          case AST.CallExpression:
+            var args = ast.arguments.slice(1).map(function (arg) {
+              return arg.type === AST.CallExpression ? ':(' + str(arg) + ')' : ':' + str(arg);
+            }).join('');
+            return str(ast.arguments[0]) + '|' + ast.callee.name + args;
+          case AST.MemberExpression:
+            if (!ast.computed && ast.property.type === AST.Identifier) {
+              return str(ast.object) + '.' + ast.property.name;
+            }
+            return str(ast.object) + '[' + str(ast.property) + ']';
+          case AST.Identifier:
+            return ast.name;
+          case AST.Literal:
+            return ast.value === undefined ? 'undefined' : JSON.stringify(ast.value);
+          case AST.ArrayExpression:
+            return '[' + ast.elements.map(function (expr) {
+              return _this.toString(expr);
+            }).join(', ') + ']';
+          case AST.ObjectExpression:
+            var properties = ast.properties.map(function (expr) {
+              if (expr.key.type === AST.Identifier || expr.key.type === AST.Literal) {
+                return _this.toString(expr.key) + ': ' + _this.toString(expr.value);
+              } else {
+                _this.throwError('IMPOSSIBLE');
+              }
+            });
+            return '{' + properties.join(', ') + '}';
+        }
+      }
+    }, {
+      key: 'eval',
+      value: function _eval(ast) {
+        var _this2 = this;
+
+        var locals = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+        var filters = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+
+        var e = function e(expr) {
+          return _this2.eval(expr, locals, filters);
+        };
+        try {
+          switch (ast.type) {
+            case AST.ConditionalExpression:
+              return e(ast.test) ? e(ast.consequent) : e(ast.alternate);
+            case AST.LogicalExpression:
+              switch (ast.operator) {
+                case '&&':
+                  return e(ast.left) && e(ast.right);
+                case '||':
+                  return e(ast.left) || e(ast.right);
+                default:
+                  this.throwError('IMPOSSIBLE');
+              }
+              break;
+            case AST.BinaryExpression:
+              var left = e(ast.left);
+              var right = e(ast.right);
+              switch (ast.operator) {
+                case '==':
+                  return left === right;
+                case '!=':
+                  return left !== right;
+                case '<':
+                  return left < right;
+                case '<=':
+                  return left <= right;
+                case '>':
+                  return left > right;
+                case '>=':
+                  return left >= right;
+                case '+':
+                  return left + right;
+                case '-':
+                  return left - right;
+                case '*':
+                  return left * right;
+                case '/':
+                  return left / right;
+                case '%':
+                  return left % right;
+                default:
+                  this.throwError('IMPOSSIBLE');
+              }
+              break;
+            case AST.UnaryExpression:
+              switch (ast.operator) {
+                case '+':
+                  return +e(ast.argument);
+                case '-':
+                  return -e(ast.argument);
+                case '!':
+                  return !e(ast.argument);
+                default:
+                  this.throwError('IMPOSSIBLE');
+              }
+              break;
+            case AST.CallExpression:
+              if (ast.callee.type !== AST.Identifier) {
+                this.throwError('IMPOSSIBLE');
+              }
+              if (!(ast.callee.name in filters)) {
+                this.throwError('Reference error: [' + ast.callee.name + '] is not a defined filter');
+              }
+              var callee = filters[ast.callee.name];
+              var args = ast.arguments.map(e);
+              return callee.apply(null, args);
+            case AST.MemberExpression:
+              if (ast.property.type === AST.Identifier && !ast.computed) {
+                return e(ast.object)[ast.property.name];
+              }
+              return e(ast.object)[e(ast.property)];
+            case AST.Identifier:
+              if (!(ast.name in locals)) {
+                this.throwError('Reference error: [' + ast.name + '] is not a defined variable');
+              }
+              return locals[ast.name];
+            case AST.Literal:
+              return ast.value;
+            case AST.ArrayExpression:
+              return ast.elements.map(e);
+            case AST.ObjectExpression:
+              var res = {};
+              ast.properties.forEach(function (prop) {
+                if (prop.key.type === AST.Identifier) {
+                  res[prop.key.name] = e(prop.value);
+                } else {
+                  res[e(prop.key)] = e(prop.value);
+                }
+              });
+              return res;
+          }
+        } catch (err) {
+          if (err.bubble) {
+            throw err;
+          }
+          var info = err.message || 'No info available';
+          this.throwError('There was an error evaluating `' + this.toString(ast) + '` (' + info + ')', true);
+        }
+      }
+    }, {
+      key: 'throwError',
+      value: function throwError(msg) {
+        var bubble = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+
+        var err = Error('Parse Error: ' + msg);
+        err.bubble = bubble;
+        throw err;
       }
     }, {
       key: 'parse',
       value: function parse(text) {
-        var _this2 = this;
+        var _this3 = this;
 
         var ast = this.astBuilder.ast(text);
-        return function (locals) {
-          return _this2.eval(ast, locals);
+        return function () {
+          var locals = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+          var filters = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+          return _this3.eval(ast, locals, filters);
         };
       }
     }]);
