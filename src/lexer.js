@@ -20,6 +20,8 @@ export default class Lexer {
         this.readNumber();
       } else if (this.isIdent(ch)) {
         this.readIdent();
+      } else if (this.is(ch, '`')) {
+        this.readBacktickIdent();
       } else if (this.is(ch, '(){}[].,;:?')) {
         this.tokens.push({ index: this.index, text: ch });
         this.index++;
@@ -111,6 +113,48 @@ export default class Lexer {
       constant: true,
       value: Number(number)
     });
+  }
+
+  readBacktickIdent() {
+    let start = this.index;
+    this.index++;
+    let string = '';
+    let rawString = '`';
+    let escape = false;
+    while (this.index < this.text.length) {
+      let ch = this.text.charAt(this.index);
+      rawString += ch;
+      if (escape) {
+        if (ch === 'u') {
+          let hex = this.text.substring(this.index + 1, this.index + 5);
+          if (!hex.match(/[\da-f]{4}/i)) {
+            this.throwError('Invalid unicode escape [\\u' + hex + ']');
+          }
+          this.index += 4;
+          string += String.fromCharCode(parseInt(hex, 16));
+        } else {
+          let rep = ESCAPE[ch];
+          string = string + (rep || ch);
+        }
+        escape = false;
+      } else if (ch === '\\') {
+        escape = true;
+      } else if (ch === '`') {
+        this.index++;
+        this.tokens.push({
+          index: start,
+          text: string,
+          rawText: rawString,
+          identifier: true,
+          backtick: true
+        });
+        return;
+      } else {
+        string += ch;
+      }
+      this.index++;
+    }
+    this.throwError('Unterminated backtick identifier', start);
   }
 
   readIdent() {
