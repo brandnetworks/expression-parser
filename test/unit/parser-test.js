@@ -1,7 +1,7 @@
 import util from 'util';
 import {Lexer, AST, Parser} from '../../src';
 
-describe.skip('Default Parser', () => {
+describe('Default Parser', () => {
   let ast = new AST(new Lexer());
   let parser = new Parser(ast);
 
@@ -16,24 +16,23 @@ describe.skip('Default Parser', () => {
       result: 0
     }],
   }, {
-    name: 'evals function evaluation',
-    expresssion: 'foo(bar, 1, "hola")',
-    cases: [{
-      locals: {
-        foo: function(a, b, c) {
-          return '' + a + b + c;
-        },
-        bar: 'adios'
-      },
-      result: 'adios1hola'
-    }]
-  }, {
     name: 'evals filter evaluation',
     expresssion: 'name|replace : "Mr" : "Mrs"',
     cases: [{
-      locals: {
+      locals: { name: 'Mr. Albo' },
+      filters: {
         replace: (text, subst, replacement) => text.replace(subst, replacement),
-        name: 'Mr. Albo'
+      },
+      result: 'Mrs. Albo'
+    }]
+  }, {
+    name: 'evals nesterd filter evaluation',
+    expresssion: 'name|replace:("M"|append:"r"):"Mrs"',
+    cases: [{
+      locals: { name: 'Mr. Albo' },
+      filters: {
+        append: (a, b) => a + b,
+        replace: (text, subst, replacement) => text.replace(subst, replacement),
       },
       result: 'Mrs. Albo'
     }]
@@ -60,7 +59,7 @@ describe.skip('Default Parser', () => {
     it(test.name, () => {
       let $eval = parser.parse(test.expresssion);
       test.cases.forEach(c => {
-        expect($eval(c.locals)).equals(c.result);
+        expect($eval(c.locals, c.filters)).equals(c.result);
       });
     });
   });

@@ -11,8 +11,8 @@ export default class Parser {
     this.options = defaults(options, DEFAULT_OPTIONS);
   }
 
-  eval(ast, locals = {}) {
-    let e = expr => this.eval(expr, locals);
+  eval(ast, locals = {}, filters = {}) {
+    let e = expr => this.eval(expr, locals, filters);
     switch (ast.type) {
       case AST.Program:
         let result;
@@ -77,7 +77,13 @@ export default class Parser {
         }
         break;
       case AST.CallExpression:
-        let callee = e(ast.callee);
+        if (ast.callee.type !== AST.Identifier) {
+          this.throwError('IMPOSSIBLE');
+        }
+        if (!(ast.callee.name in filters)) {
+          this.throwError(`Reference error: [${ast.callee.name}] is not a defined filter`);
+        }
+        let callee = filters[ast.callee.name];
         let args = ast.arguments.map(e);
         return callee.apply(null, args);
       case AST.MemberExpression:
@@ -119,19 +125,20 @@ export default class Parser {
     }
   }
 
-  assign(into, ast, value, locals) {
+  assign(into, ast, value, locals, filters) {
+    let e = expr => this.eval(expr, locals, filters);
     if (ast.type === AST.Identifier) {
       if (into === locals && !this.options.allowUndefLocalAssignment && !(ast.name in into)) {
-        throw Error(`Reference Error: Can't assign to an undefined local variable [${ast.name}]`);
+        this.throwError(`Reference Error: Can't assign to an undefined local variable [${ast.name}]`);
       }
       into[ast.name] = value;
     } else if (ast.type === AST.MemberExpression) {
-      this.assign(this.eval(ast.object, locals), ast.property, value, locals);
+      this.assign(e(ast.object), ast.property, value, locals);
     } else {
       if (into === locals) {
         this.throwError('IMPOSSIBLE');
       }
-      into[this.eval(ast)] = value;
+      into[e(ast)] = value;
     }
   }
 
@@ -141,6 +148,6 @@ export default class Parser {
 
   parse(text) {
     let ast = this.astBuilder.ast(text);
-    return locals => this.eval(ast, locals);
+    return (locals = {}, filters = {}) => this.eval(ast, locals, filters);
   }
 }

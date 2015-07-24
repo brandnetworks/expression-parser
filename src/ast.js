@@ -164,10 +164,7 @@ export default class AST {
 
     let next;
     while ((next = this.expect('(', '[', '.'))) {
-      if (next.text === '(') {
-        primary = { type: AST.CallExpression, callee: primary, arguments: this.parseArguments() };
-        this.consume(')');
-      } else if (next.text === '[') {
+      if (next.text === '[') {
         primary = { type: AST.MemberExpression, object: primary, property: this.expression(), computed: true };
         this.consume(']');
       } else if (next.text === '.') {
@@ -188,16 +185,6 @@ export default class AST {
     }
 
     return result;
-  }
-
-  parseArguments() {
-    let args = [];
-    if (this.peekToken().text !== ')') {
-      do {
-        args.push(this.expression());
-      } while (this.expect(','));
-    }
-    return args;
   }
 
   identifier() {

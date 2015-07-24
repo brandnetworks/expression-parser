@@ -17,8 +17,7 @@ Features
 - Ternary Operator
 - Object and array literals
 - Object and array member evaluation
-- Function calls
-- Angular Filter expressions
+- Function calls through filter expressions
 - Locals variable reassignment
 
 Examples
