@@ -31,7 +31,7 @@ export default class Parser {
           case '||':
             return e(ast.left) || e(ast.right);
           default:
-            throw Error();
+            this.throwError('IMPOSSIBLE');
         }
         break;
       case AST.BinaryExpression:
@@ -63,7 +63,7 @@ export default class Parser {
           case '%':
             return left % right;
           default:
-            throw Error();
+            this.throwError('IMPOSSIBLE');
         }
         break;
       case AST.UnaryExpression:
@@ -75,7 +75,7 @@ export default class Parser {
           case '!':
             return !e(ast.argument);
           default:
-            throw Error();
+            this.throwError('IMPOSSIBLE');
         }
         break;
       case AST.CallExpression:
@@ -89,7 +89,7 @@ export default class Parser {
         return e(ast.object)[e(ast.property)];
       case AST.Identifier:
         if (!(ast.name in locals)) {
-          throw Error(`Reference error: [${ast.name}] is not defined`);
+          this.throwError(`Reference error: [${ast.name}] is not a defined variable`);
         }
         return locals[ast.name];
       case AST.Literal:
@@ -104,7 +104,7 @@ export default class Parser {
         return res;
       case AST.AssignmentExpression:
         if (!this.isAssignable(ast.left)) {
-          throw Error('Trying to assign a value to a non l-value');
+          this.throwError('Trying to assign a value to a non l-value');
         }
         this.assign(locals, ast.left, e(ast.right), locals);
         return undefined;
@@ -131,10 +131,14 @@ export default class Parser {
       this.assign(this.eval(ast.object, locals), ast.property, value, locals);
     } else {
       if (into === locals) {
-        throw Error();
+        this.throwError('IMPOSSIBLE');
       }
       into[this.eval(ast)] = value;
     }
+  }
+
+  throwError(msg) {
+    throw Error(`Parse Error: ${msg}`);
   }
 
   parse(text) {
