@@ -39,10 +39,8 @@ export default class Parser {
         let right = e(ast.right);
         switch (ast.operator) {
           case '==':
-          case '===':
             return left === right;
           case '!=':
-          case '!==':
             return left !== right;
           case '<':
             return left < right;

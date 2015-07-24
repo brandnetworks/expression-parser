@@ -4,8 +4,6 @@ export const OPERATORS = {
   '*': true,
   '/': true,
   '%': true,
-  '===': true,
-  '!==': true,
   '==': true,
   '!=': true,
   '<': true,

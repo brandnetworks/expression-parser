@@ -101,7 +101,7 @@ export default class AST {
   equality() {
     let left = this.relational();
     let token;
-    while ((token = this.expect('==', '!=', '===', '!=='))) {
+    while ((token = this.expect('==', '!='))) {
       left = { type: AST.BinaryExpression, operator: token.text, left: left, right: this.relational() };
     }
     return left;
