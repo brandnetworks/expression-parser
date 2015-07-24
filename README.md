@@ -30,7 +30,7 @@ $eval({name: 'Mr. Asimov'}, {
 });
 // > 'Mrs. Asimov'
 var $eval = parser.parse('1 + 2 + 8/4');
-$eval()
+$eval();
 // > 5
 ```
 
@@ -43,7 +43,7 @@ $eval({name: 'Mr. Asimov'}, {
 });
 // > 'Mrs. Asimov'
 var $eval = parser.parse('1 + 2 + 8/4');
-$eval()
+$eval();
 // > 5
 ```
 For more examples check the tests.
