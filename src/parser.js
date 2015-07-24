@@ -9,9 +9,26 @@ export default class Parser {
     this.options = defaults(options, DEFAULT_OPTIONS);
   }
 
+  precedence(expr1, expr2) {
+    var prec = AST.PRECEDENCE;
+    if (prec[expr1.type] < prec[expr2.type]) {
+      return -1;
+    } else if (prec[expr1.type] > prec[expr2.type]) {
+      return +1;
+    } else if (expr1.type === AST.LogicalExpression || expr1.type === AST.BinaryExpression) {
+      let oprec = expr1.type === AST.LogicalExpression ? AST.LOGICAL_EXPRESSION_PRECEDENCE : AST.BINARY_EXPRESSION_PRECEDENCE;
+      if (oprec[expr1.operator] < oprec[expr2.operator]) {
+        return -1;
+      } else if (oprec[expr1.operator] > oprec[expr2.operator]) {
+        return +1;
+      }
+    }
+    return 0;
+  }
+
   toString(ast, parent) {
     let str = expr => this.toString(expr, ast);
-    if (parent && AST.PRIORITY[ast.type] <= AST.PRIORITY[parent.type]) {
+    if (parent && this.precedence(ast, parent) < 0) {
       return `(${this.toString(ast)})`;
     }
     switch (ast.type) {
@@ -24,13 +41,14 @@ export default class Parser {
       case AST.UnaryExpression:
         return `${ast.operator}${str(ast.argument)}`;
       case AST.CallExpression:
-        let args = ast.arguments.length > 1 ? ast.arguments.slice(1).map(arg => `:${str(arg)}`).join() : '';
+        let args = ast.arguments.slice(1)
+          .map(arg => arg.type === AST.CallExpression ? `:(${str(arg)})` : `:${str(arg)}`).join('');
         return `${str(ast.arguments[0])}|${ast.callee.name}${args}`;
       case AST.MemberExpression:
         if (!ast.computed && ast.property.type === AST.Identifier) {
           return `${str(ast.object)}.${ast.property.name}`;
         }
-        return `${str(ast.object)}[${this.toString(ast.property)}]`;
+        return `${str(ast.object)}[${str(ast.property)}]`;
       case AST.Identifier:
         return ast.name;
       case AST.Literal:

@@ -7,13 +7,13 @@ describe('Default Parser', () => {
 
   let tests = [{
     name: 'evals arithmetic',
-    expresssion: 'a + b - c/2',
+    expresssion: 'a + b - c/(1 + 3 - 2) - 1',
     cases: [{
       locals: { a: 3, b: 7, c: 4 },
-      result: 8
+      result: 7
     }, {
       locals: { a: -1, b: -3, c: -8 },
-      result: 0
+      result: -1
     }],
   }, {
     name: 'evals filter evaluation',
@@ -35,6 +35,15 @@ describe('Default Parser', () => {
         replace: (text, subst, replacement) => text.replace(subst, replacement),
       },
       result: 'Mrs. Albo'
+    }]
+  }, {
+    name: 'multiple filters',
+    expresssion: '""|append:1|append:2|append:3|append:4',
+    cases: [{
+      filters: {
+        append: (a, b) => a + b,
+      },
+      result: '1234'
     }]
   }, {
     name: 'evals object members',

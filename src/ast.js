@@ -278,7 +278,7 @@ AST.ArrayExpression = 'ArrayExpression';
 AST.Property = 'Property';
 AST.ObjectExpression = 'ObjectExpression';
 
-AST.PRIORITY = {
+AST.PRECEDENCE = {
   [AST.ConditionalExpression]: 1,
   [AST.LogicalExpression]: 1,
   [AST.BinaryExpression]: 2,
@@ -287,7 +287,26 @@ AST.PRIORITY = {
   [AST.MemberExpression]: 5,
   [AST.Identifier]: 6,
   [AST.Literal]: 6,
-  [AST.ArrayExpression]: 6,
   [AST.ObjectExpression]: 6,
   [AST.Property]: 6,
+  [AST.ArrayExpression]: 6,
+};
+
+AST.LOGICAL_EXPRESSION_PRECEDENCE = {
+  '||': 1,
+  '&&': 2,
+};
+
+AST.BINARY_EXPRESSION_PRECEDENCE = {
+  '==': 1,
+  '!=': 1,
+  '<': 2,
+  '<=': 2,
+  '>': 2,
+  '>=': 2,
+  '+': 3,
+  '-': 3,
+  '*': 4,
+  '/': 4,
+  '%': 4,
 };
