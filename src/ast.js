@@ -218,7 +218,7 @@ export default class AST {
     if (this.peekToken().text !== ']') {
       do {
         if (this.peek(']')) {
-          // Support trailing commas per ES5.1.
+          // Support trailing commas
           break;
         }
         elements.push(this.expression());
@@ -234,7 +234,7 @@ export default class AST {
     if (this.peekToken().text !== '}') {
       do {
         if (this.peek('}')) {
-          // Support trailing commas per ES5.1.
+          // Support trailing commas
           break;
         }
         property = { type: AST.Property, kind: 'init' };
