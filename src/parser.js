@@ -11,7 +11,7 @@ export default class Parser {
 
   toString(ast, parent) {
     let str = expr => this.toString(expr, ast);
-    if (parent && AST.PRIORITY[ast.type] <= AST.PRIORITY[parent.type] && AST.PRIORITY[parent.type] > 0) {
+    if (parent && AST.PRIORITY[ast.type] <= AST.PRIORITY[parent.type]) {
       return `(${this.toString(ast)})`;
     }
     switch (ast.type) {
