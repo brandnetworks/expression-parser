@@ -64,32 +64,3 @@ describe('Default Parser', () => {
     });
   });
 });
-
-
-describe('Parser with local assignment', () => {
-  let ast = new AST(new Lexer(), {
-    allowAssignments: true
-  });
-  let parser = new Parser(ast);
-
-  it('assigns value to local variable', () => {
-    let locals = {};
-    let $eval = parser.parse('a = 3');
-    $eval(locals);
-    expect(locals.a).equals(3);
-  });
-
-  it('assigns value to local variable member', () => {
-    let locals = {a: {b: 0}};
-    let $eval = parser.parse('a.b = 3');
-    $eval(locals);
-    expect(locals.a.b).equals(3);
-  });
-
-  it('assigns value to local variable member as an expression', () => {
-    let locals = {a: {foo: 0}};
-    let $eval = parser.parse('a["f" + "oo"] = 3');
-    $eval(locals);
-    expect(locals.a.foo).equals(3);
-  });
-});

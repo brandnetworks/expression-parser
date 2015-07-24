@@ -1,9 +1,7 @@
 import {defaults} from './helpers';
 import AST from './ast';
 
-export const DEFAULT_OPTIONS = {
-  allowUndefLocalAssignment: true,
-};
+export const DEFAULT_OPTIONS = {};
 
 export default class Parser {
   constructor(astBuilder, options) {
@@ -106,39 +104,6 @@ export default class Parser {
           res[e(prop.key)] = e(prop.value);
         });
         return res;
-      case AST.AssignmentExpression:
-        if (!this.isAssignable(ast.left)) {
-          this.throwError('Trying to assign a value to a non l-value');
-        }
-        this.assign(locals, ast.left, e(ast.right), locals);
-        return undefined;
-    }
-  }
-
-  isAssignable(ast) {
-    if (ast.type === AST.Identifier) {
-      return true;
-    } else if (ast.type === AST.MemberExpression) {
-      return this.isAssignable(ast.object);
-    } else {
-      return false;
-    }
-  }
-
-  assign(into, ast, value, locals, filters) {
-    let e = expr => this.eval(expr, locals, filters);
-    if (ast.type === AST.Identifier) {
-      if (into === locals && !this.options.allowUndefLocalAssignment && !(ast.name in into)) {
-        this.throwError(`Reference Error: Can't assign to an undefined local variable [${ast.name}]`);
-      }
-      into[ast.name] = value;
-    } else if (ast.type === AST.MemberExpression) {
-      this.assign(e(ast.object), ast.property, value, locals);
-    } else {
-      if (into === locals) {
-        this.throwError('IMPOSSIBLE');
-      }
-      into[e(ast)] = value;
     }
   }
 

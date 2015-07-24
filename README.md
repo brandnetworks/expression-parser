@@ -18,7 +18,6 @@ Features
 - Object and array literals
 - Object and array member evaluation
 - Function calls through filter expressions
-- Locals variable reassignment
 
 Examples
 --------

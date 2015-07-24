@@ -1,7 +1,6 @@
 import {copy, defaults} from './helpers';
 
 export const DEFAULT_OPTIONS = {
-  allowAssignments: true,
   multipleExpressions: true
 };
 
@@ -57,15 +56,7 @@ export default class AST {
   }
 
   expression() {
-    return this.assignment();
-  }
-
-  assignment() {
-    let result = this.ternary();
-    if (this.options.allowAssignments && this.expect('=')) {
-      result = { type: AST.AssignmentExpression, left: result, right: this.assignment(), operator: '=' };
-    }
-    return result;
+    return this.ternary();
   }
 
   ternary() {
@@ -293,7 +284,6 @@ export default class AST {
 
 AST.Program = 'Program';
 AST.ExpressionStatement = 'ExpressionStatement';
-AST.AssignmentExpression = 'AssignmentExpression';
 AST.ConditionalExpression = 'ConditionalExpression';
 AST.LogicalExpression = 'LogicalExpression';
 AST.BinaryExpression = 'BinaryExpression';
