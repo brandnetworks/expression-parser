@@ -22,7 +22,7 @@ Examples
 --------
 ```js
 // On Node.js
-var Parser = require('expression-parser');
+var Parser = require('expression-parser').Parser;
 var parser = new Parser();
 var $eval = parser.parse('name|replace:"Mr":"Mrs"');
 $eval({name: 'Mr. Asimov'}, {
