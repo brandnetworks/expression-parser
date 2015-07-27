@@ -167,7 +167,7 @@ export default class AST {
     if (!token.identifier) {
       this.throwError('is not a valid identifier', token);
     }
-    return { type: AST.Identifier, name: token.text };
+    return { type: AST.Identifier, name: token.text, backtick: !!token.backtick };
   }
 
   constant() {

@@ -79,6 +79,19 @@ describe('Default Parser', () => {
     cases: [{
       result: 2
     }]
+  }, {
+    name: 'accepts backtick identifiers',
+    expression: '`hola que tal` + 2',
+    cases: [{
+      locals: {'hola que tal': 1},
+      result: 3
+    }]
+  }, {
+    name: 'accepts backtick identifiers as member expressions',
+    expression: '{"hola que tal": 1}.`hola que tal`',
+    cases: [{
+      result: 1
+    }]
   }];
 
   tests.forEach(test => {

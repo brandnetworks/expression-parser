@@ -51,7 +51,7 @@ export default class Parser {
         return `${str(ast.arguments[0])}|${ast.callee.name}${args}`;
       case AST.MemberExpression:
         if (!ast.computed && ast.property.type === AST.Identifier) {
-          return `${str(ast.object)}.${ast.property.name}`;
+          return `${str(ast.object)}.${ast.property.backtick ? '`' + ast.property.name + '`' : ast.property.name }`;
         }
         return `${str(ast.object)}[${str(ast.property)}]`;
       case AST.Identifier:
