@@ -136,6 +136,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             this.readNumber();
           } else if (this.isIdent(ch)) {
             this.readIdent();
+          } else if (this.is(ch, '`')) {
+            this.readBacktickIdent();
           } else if (this.is(ch, '(){}[].,;:?')) {
             this.tokens.push({ index: this.index, text: ch });
             this.index++;
@@ -226,6 +228,49 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           constant: true,
           value: Number(number)
         });
+      }
+    }, {
+      key: 'readBacktickIdent',
+      value: function readBacktickIdent() {
+        var start = this.index;
+        this.index++;
+        var string = '';
+        var rawString = '`';
+        var escape = false;
+        while (this.index < this.text.length) {
+          var ch = this.text.charAt(this.index);
+          rawString += ch;
+          if (escape) {
+            if (ch === 'u') {
+              var hex = this.text.substring(this.index + 1, this.index + 5);
+              if (!hex.match(/[\da-f]{4}/i)) {
+                this.throwError('Invalid unicode escape [\\u' + hex + ']');
+              }
+              this.index += 4;
+              string += String.fromCharCode(parseInt(hex, 16));
+            } else {
+              var rep = ESCAPE[ch];
+              string = string + (rep || ch);
+            }
+            escape = false;
+          } else if (ch === '\\') {
+            escape = true;
+          } else if (ch === '`') {
+            this.index++;
+            this.tokens.push({
+              index: start,
+              text: string,
+              rawText: rawString,
+              identifier: true,
+              backtick: true
+            });
+            return;
+          } else {
+            string += ch;
+          }
+          this.index++;
+        }
+        this.throwError('Unterminated backtick identifier', start);
       }
     }, {
       key: 'readIdent',
@@ -476,7 +521,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         if (!token.identifier) {
           this.throwError('is not a valid identifier', token);
         }
-        return { type: AST.Identifier, name: token.text };
+        return { type: AST.Identifier, name: token.text, backtick: !!token.backtick };
       }
     }, {
       key: 'constant',
@@ -681,7 +726,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             return str(ast.arguments[0]) + '|' + ast.callee.name + args;
           case AST.MemberExpression:
             if (!ast.computed && ast.property.type === AST.Identifier) {
-              return str(ast.object) + '.' + ast.property.name;
+              return str(ast.object) + '.' + (ast.property.backtick ? '`' + ast.property.name + '`' : ast.property.name);
             }
             return str(ast.object) + '[' + str(ast.property) + ']';
           case AST.Identifier:
